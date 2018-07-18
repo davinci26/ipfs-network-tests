@@ -13,6 +13,6 @@ Run make.
 ## Usage
 
 ```sh
-sudo ./ipfs-network-test --verbose --latency=10
+sudo ./ipfs-network-tests --verbose --latency=10
 ```
 

@@ -94,6 +94,7 @@ func RunMultinode(p *MultinodeParams) (*MultinodeOutput, error) {
 		if err != nil {
 			return nil, err
 		}
+		fmt.Printf("Starting Node %d / %d\n", i, p.NumNodes)
 		log("started node: ", nd)
 		nodes = append(nodes, nd)
 	}
@@ -282,7 +283,7 @@ func main() {
 			NumNodes: context.Int("numnodes"),
 			FileSize: context.Int("filesize"),
 			Net: &cn.LinkSettings{
-				Latency: context.Int("latency"),
+				Latency: uint(context.Int("latency")),
 			},
 		}
 		res, err := RunMultinode(params)
