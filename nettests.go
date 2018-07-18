@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"math"
 	"os"
 	"os/exec"
 	"strconv"
@@ -45,11 +47,28 @@ type MultinodeParams struct {
 }
 
 type FetchStat struct {
-	Duration time.Duration
-	Total    int
-	BW       float64
-
+	Duration  time.Duration
+	Total     int
+	BW        float64
 	DupBlocks int
+}
+
+type Results struct {
+	Avg_time  float64
+	Std_Time  float64
+	Users     int
+	Date_Time time.Time
+	DupBlocks int
+	Results   []float64
+}
+
+func ResultsToFile(results Results) {
+
+	resultsJson, _ := json.Marshal(results)
+	err := ioutil.WriteFile("results.json", resultsJson, 0644)
+	if err != nil {
+		// nozzle.printError("opening config file", err.Error())
+	}
 }
 
 type MultinodeOutput struct {
@@ -63,6 +82,23 @@ func (mo *MultinodeOutput) AverageBandwidth() float64 {
 	}
 
 	return sum / float64(len(mo.FetchStats))
+}
+
+func (mo *MultinodeOutput) DelayAvgStD() (float64, float64) {
+
+	var sum int
+	for _, f := range mo.FetchStats {
+		sum += int(f.Duration)
+	}
+	avg := float64(sum) / float64(len(mo.FetchStats))
+	var sum_sq float64
+	for _, f := range mo.FetchStats {
+		sum_sq += (avg - float64(f.Duration)) * (avg - float64(f.Duration))
+	}
+
+	std := math.Sqrt(sum_sq / float64(len(mo.FetchStats)))
+
+	return avg, std
 }
 
 func getDupBlocksFromNode(n string) (int, error) {
@@ -296,6 +332,9 @@ func main() {
 			hb := hum.IBytes(uint64(f.BW))
 			fmt.Printf("Took: %s, Average BW: %s, TX Size: %d, DupBlocks: %d\n", f.Duration, hb, f.Total, f.DupBlocks)
 		}
+		avg, std := res.DelayAvgStD()
+		fmt.Println(hum.IBytes(uint64(avg)))
+		fmt.Println(hum.IBytes(uint64(std)))
 		fmt.Println(hum.IBytes(uint64(res.AverageBandwidth())))
 		return nil
 	}
